@@ -1,0 +1,327 @@
+﻿GIxPD - Pràctica 3 
+Arquitectures d’emmagatzament
+
+
+
+
+  
+
+
+
+NOM: Joel Clemente Arroyo
+NIU:   1673339
+NOM: Laura Gispert Cortés
+NIU:   1667937
+GITHUB: https://github.com/zari023/gixpd_p3
+ID MV: 1674
+Índex
+________________
+
+
+L’emmagatzematge de dades és una peça fonamental en qualsevol infraestructura tecnològica moderna. Des de petits dispositius personals fins a grans sistemes empresarials, tots els equips informàtics depenen de tecnologies d’emmagatzematge per conservar i gestionar informació de manera eficient. Amb l’evolució constant de la tecnologia, és essencial comprendre les diferents opcions d’emmagatzematge disponibles, les seves característiques i aplicacions. Aquesta pràctica té com a objectiu analitzar i comparar les diverses tecnologies d’emmagatzematge existents, per tal de poder escollir la més adequada segons les necessitats específiques d’ús i rendiment.
+________________
+
+
+1. Configuració de les diferents màquines virtuals
+La primera sessió de la pràctica constarà de la configuració de les diferents màquines virtuals amb 3 mètodes diferents de divisió d’emmagatzament distribuït: RAID i GlusterFS. Cada mètode té les seves caraterístiques i les seves avantatges per diferents entorns.
+*  RAID: És un mètode que combina múltiples discs, espai físic, en un o més unitats lògiques, afegint redundància de dades (depenent del nivell RAID) i/o eficiència perl oferir seguretat a les dades i millorar el rendiment en lectura i escriptura
+
+
+*  GlusterFS: És un sistema d’arxius distribuït que permet agrupar l’emmagatzematge de diversos servidors, oferint escalabilitat i alta disponibilitat. GlusterFS és ideal per gestionar grans volums de dades en entorns de núvol i virtualització. 
+
+
+1.1 Configuració discos crec
+Per poder tenir un emmagatzem distribuït cal una configuaració previa. Per tant[a]
+
+
+  
+  
+
+
+
+  
+
+________________
+1.2 RAID 
+En aquesta pràctica confi els discos en dos nivells de RAID: RAID5 i RAID1.  (Ens permetrà comparar les característiques de cada nivell, com per exemple, la redundància de dades)
+
+
+Per començar, com que la gestió d’emmagatzematge pertany a l’usuari root, executem la comanda sudo -i, per canviar al superusuari per tenir permisos d’administració.
+Per saber els discos i particions que hi ha disponibles, executem la comanda fdisk -l. 
+
+
+  
+
+Seguidament creem 3 noves particions: (sda, sdb i sdb). Executar per a cada disc les següents comandes:
+
+
+1. Executem la comanda fdisk /dev/sda on obrim el disc amb el programa fdisk per crear o modificar particions. 
+Se’ns obre l’opció d’editar o crear amb el programa fdisk com es pot veure en la imatge.
+2. Com la nostra intenció és crear una nova partició executem la comanda n. Ens demana que escollim p perquè volem fer una partició primària. I seguidament ens surt per seleccionar el nombre de particions que per defecte fa una. I ens demana especificar el primer sector i l’ultim sector. Aquests sectors defineixen l’espai que ocuparà la partició dins del disc. Un cop acabem ja se’ns crea la nova partició.
+
+
+   3. Executem la comanda t per canviar el tipus de partició. Per saber quin tipus de partició escollir, correm la comanda L que ens llista tots els tipus de partició disponibles que hi ha. 
+  
+
+
+
+   4. Com que ens interesa seleccionar “Linux RAID autodetect” com a tipus de partició, executem la comanda fd que és la comanda que li pertoca a aquest.
+
+
+  
+
+
+
+   5. Per acabar, ens assegurem que el disc té ben definides les dades que volem, amb la comanda p i un cop comprovem que tot és correcte, executem la comanda w. Molt important tenir precaució amb la comanda write (w) perquè els canvis només es veuran reflectits si s’utilitza, per tant, hem d’estar molt segurs abans d’executar-la.
+
+
+
+
+
+
+  
+
+
+
+Repetim el proces per a sdb i sdc. Creant una partició en cada disc i configuarant-la com a “Linux RAID autodetect”.
+
+
+Ara formategem la partició amb el sistema d’arxius ext4 amb la comanda mkfs.ext4 /dev/sda1.  Això ho fem per preparar la partició amb el sistema d’arxius ext4 per emmagatzemar dades d’una manera estructurada i accessible pel SO. El format mkfs.ext4 crear l’estructura interna que permet gestionar fitxers i carpetes, convertint-la en un sistema d’arxius reconeixible per Linux. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Per la part on posa test
+  
+
+
+
+________________
+
+
+1.3 GLUSTERFS
+Com ja sabem, GlusterFS és un sistema d’arxius distribuït que permet combinar el magatzem de diverses màquines en un únic sistema d’arxius escalable. En aquesta part de la pràctica, configurarem dues màquines virtuals (MVA i MVB), cadascuna amb tres nodes de magatzem, i establirem la connexió entre ambdues per crear un sistema d’arxius distribuït i replicat.
+
+
+
+
+1.3.1 MVA i MVB
+Com sempre, executem apt update abans de fer qualsevol modificació, és recomanable actualitzar els paquets per si hi hagués alguna nova actualització i així evitar problemes de configuracions posteriors.
+
+
+Igual que amb els RAIDS hem entrar en el directori /dev i crear un nou espai a disk per a cada nou node. Per tant, executarem la comanda fdisk /dev/sda i també per la resta de discs: sdb i sdc. Un cop creat els discs, crearem un sistema d’arxius ext4 dintre de cada nou disc. Per tant, executarem les següents comandes: mkfs -t ext4 /dev/sda1. (també per sdb1 i sdc1).
+
+
+Per poder accedir als discs de forma organitzada, no és suficient amb tenir els discs, sinó que també és necessari establir punts de muntatge. 
+Els punts de muntatge són imprescindibles perquè són l’accés a les dades que conté el disc. Són directoris, en els que s’estableix connexió entre el disc i el directori corresponent. Per exemple, si llegeixes un arxiu en el directori /data/node1 realment l’estàs llegint en /dev/sda1. Si guardem un arxiu en /data/node1, el sistema ho guardarà en /dev/sda1.
+
+
+Per crear els directoris executarem la següent comanda: mkdir -p /data/node1. Afegim -p per assegurar que en el cas que no existeixi el directori “pare” /data ens el crei. Ho farem també per node2 i node3).
+
+
+Un cop tenim els directoris /data/node1, /data/node2, /data/node3 creats, els hem de muntar, establir conexió, amb els discs corresponents. Per deixar-ho predeterminat i que es quedi preestablert sempre que obrim la màquina, modificarem l’arxiu /etc/fstab ( un arxiu que llegeix la MV quan arranca) de tal manera que sempre que s’ensengui, es muntarà per defecte.
+Doncs bé, amb la comanda nano /etc/fstab, obrim el document i afegim les comandes necessàries com es pot veure a la imatge.
+Un cop guardat, executem la comanda mount -a. Aquesta comanda monta els punts de manera inmediata i sense que calgui reiniciar el sistema.
+ Per verificar que les particions s’han muntat correctament executem df -h per mostrar l’espai disponible per cadascuna.
+Perquè els servidors puguin operar en el clúster de GlusterFS cal instal·lar els paquests necessàris. Com que volem tant compartir com accedir a les dades desde les dues màquines virtuals (MVA i MVB), instal·larem tant client com servidor. Per tant executarem en les dues màquines la comanda apt install glusterfs-client glusterfs-server.
+Un cop instal·lat, necesitem iniciar el servei glusterd, procés principal de GlusterFS i necessàri per poder gestionar el clúster i coordinar la distribució i replicació de dades. L’iniciem amb la comanda systemctl start glusterd.
+Per tal que el servei glusterd s’inicii per defecte cada cop que el sistema arranqui executarem la comanda systemctl enable glusterd.
+Amb el propòsit de verificar que el servei GlusterFS està actiu i funcionant correctament en cada servidor executarem systemctl status glusterd. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+________________
+1.4 Logical Volume Manager (LVM)
+
+
+
+
+Es farà servir fdisk per crear particions en els discs. Executarem la comanda fdisk /dev/sda per crear la primera partició del disc. Creem una nova partició amb n. Seleccionem p per que sigui una partició primaria i deixem per defecte el nombre i el tamany de la partició. Fem servir t per canviar el tipus de partició i amb L mostrem per pantalla els diferents tipus de particions per buscar el que ens interessa. Escrivim 8e, que és el codi hexadecimal que es correspon amb les particions lvm. Finalment, executem p per veure els detalls de la partició i confirmar que tot s’ha configurat correctament i escrivim les modificacions amb w.
+Repetim el procés pels discos sdb i sdc.
+
+
+  
+
+  
+
+Ara que les particiones estan creades podem executar fdisk -l per visualitzar totes les particions dels discs del sistema:
+
+  
+
+
+
+S’utilitzarà el comandament pvcreate /dev/sda1 /dev/sdb1 /dev/sdc1  que converteix les particions /dev/sda1 /dev/sb1 /dev/sdc1 en “volums físics” (PV) per a LVM.
+
+
+Per veure les detalls dels volums creats (PVs) utilitzem pvdisplay. Ens permetrà verifica que les particions s’han configurat correctament per a LVM. 
+
+
+  
+
+  
+
+
+
+Amb la comanda pvs ens permet comprovar de manera ràpida els volums físics i el seu espai. Per assegurar-se que LVM detecta tots els volums físics disponibles dels sistema, executem la comanda pvscan perquè escaneji el sistema per trobar tots els volums físics.
+ 
+  
+
+
+
+Utilitzem la comanda vgcreate grp1 /dev/sda1 /dev/sdb1 /dev/sdc1 per crear un grup de volums anomenat grp1, que agrupa els volums físics /dev/sda1, /dev/sdb1 i /dev/sdc1 en una unitat d'emmagatzematge única. Això ens permet gestionar l'espai d'aquests volums conjuntament i simplifica l'administració de l'emmagatzematge. Després, executem vgdisplay per obtenir informació detallada sobre el grup grp1, com la seva mida i l'espai disponible, i així verificar que la seva creació s'ha realitzat correctament. Amb lvcreate -L 50 -n vol01 grp1, creem un volum lògic anomenat vol01 de 50 MB dins del grup de volums grp1. Això ens permet subdividir l'espai del grup en unitats d'emmagatzematge independents que es poden fer servir per a diverses aplicacions o directoris. 
+
+
+  
+
+
+
+
+
+
+
+Finalment, utilitzem lvdisplay per revisar detalls sobre el volum lògic vol01, comprovant que ha estat creat correctament dins del grup grp1. Aquest procés global ens ajuda a organitzar i controlar l'emmagatzematge de manera flexible i eficaç amb LVM (Logical Volume Manager).
+
+
+  
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+________________
+
+2. ANÀLISI FIABILITAT, EXTENSIBILITAT I PRESTACIONS
+        2.1 RAIDS
+        2.2 GLUSTERFS
+        2.3 LVM
+          
+  
+  
+
+[a]el que va explicar el profe que jo no estava
